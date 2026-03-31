@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import { reactive } from 'vue'
+ import { reactive, computed } from 'vue'
+import { Pie } from 'vue-chartjs'
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
+
+ChartJS.register(ArcElement, Tooltip, Legend)
 
 const form = reactive({
   gender: 'muz',
@@ -13,6 +17,83 @@ const form = reactive({
   workHoursWeekly: 40,
   tvHours: 1,
   entertainmentHours: 1,
+})
+
+const chartData = computed(() => {
+  const yearsLeft = Math.max(0, form.retirementAge - form.age)
+  const totalWeeklyHours = 168 // 24 * 7
+
+  // Convert daily to weekly
+  const sleepWeekly = form.sleepHours * 7
+  const foodWeekly = form.foodHours * 7
+  const hygieneWeekly = form.hygieneHours * 7
+  const tvWeekly = form.tvHours * 7
+  const entertainmentWeekly = form.entertainmentHours * 7
+
+  const usedHours = sleepWeekly + foodWeekly + hygieneWeekly + tvWeekly + entertainmentWeekly +
+    form.commuteHoursWeekly + form.choresHoursWeekly + form.workHoursWeekly
+
+  const freeHours = Math.max(0, totalWeeklyHours - usedHours)
+
+  return {
+    labels: [
+      `Spánek (${sleepWeekly.toFixed(1)}h)`,
+      `Jídlo (${foodWeekly.toFixed(1)}h)`,
+      `Hygiena (${hygieneWeekly.toFixed(1)}h)`,
+      `Práce (${form.workHoursWeekly}h)`,
+      `Dojíždění (${form.commuteHoursWeekly}h)`,
+      `Domácnost (${form.choresHoursWeekly}h)`,
+      `TV (${tvWeekly.toFixed(1)}h)`,
+      `PC/Mobil (${entertainmentWeekly.toFixed(1)}h)`,
+      `Volný čas (${freeHours.toFixed(1)}h)`,
+    ],
+    datasets: [{
+      data: [
+        sleepWeekly,
+        foodWeekly,
+        hygieneWeekly,
+        form.workHoursWeekly,
+        form.commuteHoursWeekly,
+        form.choresHoursWeekly,
+        tvWeekly,
+        entertainmentWeekly,
+        freeHours,
+      ],
+      backgroundColor: [
+        '#6366f1', '#8b5cf6', '#a855f7', '#ec4899',
+        '#f43f5e', '#f97316', '#eab308', '#84cc16', '#22c55e'
+      ],
+      borderWidth: 0,
+    }]
+  }
+})
+
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: true,
+  plugins: {
+    legend: {
+      position: 'bottom' as const,
+      labels: {
+        color: '#b0b8d8',
+        padding: 12,
+        font: { size: 11 }
+      }
+    }
+  }
+}
+
+const freeTimePercent = computed(() => {
+  const totalWeeklyHours = 168
+  const sleepWeekly = form.sleepHours * 7
+  const foodWeekly = form.foodHours * 7
+  const hygieneWeekly = form.hygieneHours * 7
+  const tvWeekly = form.tvHours * 7
+  const entertainmentWeekly = form.entertainmentHours * 7
+  const usedHours = sleepWeekly + foodWeekly + hygieneWeekly + tvWeekly + entertainmentWeekly +
+    form.commuteHoursWeekly + form.choresHoursWeekly + form.workHoursWeekly
+  const freeHours = Math.max(0, totalWeeklyHours - usedHours)
+  return ((freeHours / totalWeeklyHours) * 100).toFixed(1)
 })
 </script>
 
@@ -83,9 +164,13 @@ const form = reactive({
         <label>Kolik hodin týdně odpracujete?</label>
         <input type="number" v-model="form.workHoursWeekly" min="0" step="0.5" />
       </div>
-
-      <button type="submit">Vypočítat</button>
     </form>
+
+    <div class="card chart-card">
+      <h2>📊 Váš týden</h2>
+      <Pie :data="chartData" :options="chartOptions" />
+      <p class="summary">Máte <strong>{{ freeTimePercent }}%</strong> volného času týdně</p>
+    </div>
   </div>
 </template>
 
@@ -97,8 +182,10 @@ const form = reactive({
 .wrapper {
   min-height: 100vh;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
   padding: 2rem;
   font-family: 'Inter', sans-serif;
@@ -111,16 +198,35 @@ const form = reactive({
   border-radius: 1.5rem;
   padding: 2.5rem;
   width: 100%;
-  max-width: 540px;
+  max-width: 480px;
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
 }
 
-h1 {
+.chart-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+h1, h2 {
   text-align: center;
-  font-size: 1.8rem;
   font-weight: 700;
   color: #e0e0ff;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+h1 { font-size: 1.8rem; }
+h2 { font-size: 1.4rem; }
+
+.summary {
+  margin-top: 1.5rem;
+  color: #b0b8d8;
+  font-size: 1rem;
+}
+
+.summary strong {
+  color: #22c55e;
+  font-size: 1.2rem;
 }
 
 .section-title {
@@ -194,21 +300,4 @@ h1 {
 }
 
 .hint a:hover { text-decoration: underline; }
-
-button {
-  margin-top: 1.8rem;
-  width: 100%;
-  padding: 0.8rem;
-  background: linear-gradient(90deg, #7c83ff, #a78bfa);
-  border: none;
-  border-radius: 0.75rem;
-  color: #fff;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.2s, transform 0.1s;
-}
-
-button:hover { opacity: 0.9; transform: translateY(-1px); }
-button:active { transform: translateY(0); }
 </style>
