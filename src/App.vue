@@ -37,15 +37,15 @@ const chartData = computed(() => {
 
   return {
     labels: [
-      `Spánek (${sleepWeekly.toFixed(1)}h)`,
-      `Jídlo (${foodWeekly.toFixed(1)}h)`,
-      `Hygiena (${hygieneWeekly.toFixed(1)}h)`,
-      `Práce (${form.workHoursWeekly}h)`,
-      `Dojíždění (${form.commuteHoursWeekly}h)`,
-      `Domácnost (${form.choresHoursWeekly}h)`,
+      `Sleep (${sleepWeekly.toFixed(1)}h)`,
+      `Food (${foodWeekly.toFixed(1)}h)`,
+      `Hygiene (${hygieneWeekly.toFixed(1)}h)`,
+      `Work (${form.workHoursWeekly}h)`,
+      `Commuting (${form.commuteHoursWeekly}h)`,
+      `Household (${form.choresHoursWeekly}h)`,
       `TV (${tvWeekly.toFixed(1)}h)`,
-      `PC/Mobil (${entertainmentWeekly.toFixed(1)}h)`,
-      `Volný čas (${freeHours.toFixed(1)}h)`,
+      `PC/Phone (${entertainmentWeekly.toFixed(1)}h)`,
+      `Free time (${freeHours.toFixed(1)}h)`,
     ],
     datasets: [{
       data: [
@@ -139,16 +139,16 @@ const lifeChartData = computed(() => {
 
   return {
     labels: [
-      `Prožito (${toYears(livedHours)} let)`,
-      `Spánek (${toYears(totalSleep)} let)`,
-      `Jídlo (${toYears(totalFood)} let)`,
-      `Hygiena (${toYears(totalHygiene)} let)`,
-      `Práce (${toYears(totalWork)} let)`,
-      `Dojíždění (${toYears(totalCommute)} let)`,
-      `Domácnost (${toYears(totalChores)} let)`,
-      `TV (${toYears(totalTv)} let)`,
-      `PC/Mobil (${toYears(totalEntertainment)} let)`,
-      `Volný čas (${toYears(totalFree)} let)`,
+      `Already lived (${toYears(livedHours)} years)`,
+      `Sleep (${toYears(totalSleep)} years)`,
+      `Food (${toYears(totalFood)} years)`,
+      `Hygiene (${toYears(totalHygiene)} years)`,
+      `Work (${toYears(totalWork)} years)`,
+      `Commuting (${toYears(totalCommute)} years)`,
+      `Household (${toYears(totalChores)} years)`,
+      `TV (${toYears(totalTv)} years)`,
+      `PC/Phone (${toYears(totalEntertainment)} years)`,
+      `Free time (${toYears(totalFree)} years)`,
     ],
     datasets: [{
       data: [
@@ -191,80 +191,80 @@ const freeYearsLeft = computed(() => {
 <template>
   <div class="wrapper">
     <form class="card" @submit.prevent>
-      <h1>⏳ Kalkulačka života</h1>
+      <h1>⏳ Life Calculator</h1>
 
       <div class="field">
-        <label>Kolik je Vám let?</label>
+        <label>How old are you?</label>
         <input type="number" v-model="form.age" min="0" max="120" />
       </div>
 
       <div class="field">
-        <label>V kolika letech půjdete do důchodu?</label>
+        <label>At what age will you retire?</label>
         <input type="number" v-model="form.retirementAge" min="0" max="120" />
       </div>
 
       <div class="field">
-        <label>Očekávaná délka života</label>
+        <label>Life expectancy</label>
         <input type="number" v-model="form.lifeExpectancy" min="0" max="120" />
-        <span class="hint">Průměr: muži ~76 let, ženy ~82 let</span>
+        <span class="hint">Average: men ~76 years, women ~82 years</span>
       </div>
 
-      <div class="section-title">Denní rutina</div>
+      <div class="section-title">Daily routine</div>
 
       <div class="field">
-        <label>Kolik hodin denně spíte?</label>
+        <label>How many hours do you sleep per day?</label>
         <input type="number" v-model="form.sleepHours" min="0" max="24" step="0.5" />
       </div>
 
       <div class="field">
-        <label>Kolik hodin denně strávíte jídlem či jeho přípravou?</label>
+        <label>How many hours per day do you spend eating or preparing food?</label>
         <input type="number" v-model="form.foodHours" min="0" max="24" step="0.5" />
       </div>
 
       <div class="field">
-        <label>Kolik hodin denně strávíte osobní hygienou a péčí o sebe?</label>
+        <label>How many hours per day do you spend on personal hygiene and self-care?</label>
         <input type="number" v-model="form.hygieneHours" min="0" max="24" step="0.5" />
       </div>
 
       <div class="field">
-        <label>Kolik hodin denně strávíte u televize?</label>
+        <label>How many hours per day do you watch TV?</label>
         <input type="number" v-model="form.tvHours" min="0" max="24" step="0.5" />
       </div>
 
       <div class="field">
-        <label>Kolik hodin denně strávíte „zábavou" u PC či na mobilu?</label>
+        <label>How many hours per day do you spend on “fun” on your PC or phone?</label>
         <input type="number" v-model="form.entertainmentHours" min="0" max="24" step="0.5" />
       </div>
 
-      <div class="section-title">Týdenní rutina</div>
+      <div class="section-title">Weekly routine</div>
 
       <div class="field">
-        <label>Kolik hodin týdně strávíte dojížděním?</label>
+        <label>How many hours per week do you spend commuting?</label>
         <input type="number" v-model="form.commuteHoursWeekly" min="0" step="0.5" />
       </div>
 
       <div class="field">
-        <label>Kolik hodin týdně potřebujete na zařízení povinností a údržbu domácnosti?</label>
+        <label>How many hours per week do you need for errands and household maintenance?</label>
         <input type="number" v-model="form.choresHoursWeekly" min="0" step="0.5" />
       </div>
 
       <div class="field">
-        <label>Kolik hodin týdně odpracujete?</label>
+        <label>How many hours per week do you work?</label>
         <input type="number" v-model="form.workHoursWeekly" min="0" step="0.5" />
       </div>
     </form>
 
     <div class="charts-column">
       <div class="card chart-card">
-        <h2>📊 Váš týden</h2>
+        <h2>📊 Your week</h2>
         <Pie :data="chartData" :options="chartOptions" />
-        <p class="summary">Máte <strong>{{ freeTimePercent }}%</strong> volného času týdně</p>
+        <p class="summary">You have <strong>{{ freeTimePercent }}%</strong> free time per week</p>
       </div>
 
       <div class="card chart-card">
-        <h2>🧬 Zbývající život</h2>
+        <h2>🧬 Your life (overview)</h2>
         <Pie :data="lifeChartData" :options="chartOptions" />
-        <p class="summary">Zbývá vám <strong>{{ freeYearsLeft }} let</strong> volného času</p>
+        <p class="summary">You have <strong>{{ freeYearsLeft }} years</strong> of free time left</p>
       </div>
     </div>
   </div>
