@@ -267,6 +267,18 @@ const freeYearsLeft = computed(() => {
         <p class="summary">You have <strong>{{ freeYearsLeft }} years</strong> of free time left</p>
       </div>
     </div>
+
+    <footer class="footer">
+      <span>© 2026 Martin Herich, </span>
+      <a
+        class="repo-link"
+        href="https://github.com/hericmar/life-calculator"
+        target="_blank"
+        rel="noreferrer"
+      >
+        GitHub
+      </a>
+    </footer>
   </div>
 </template>
 
@@ -404,4 +416,23 @@ h2 { font-size: 1.4rem; }
 }
 
 .hint a:hover { text-decoration: underline; }
+
+.footer {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0.75rem 1rem 0;
+  color: #666e9a;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.repo-link {
+  color: #7c83ff;
+  text-decoration: none;
+}
+
+.repo-link:hover {
+  text-decoration: underline;
+}
 </style>
