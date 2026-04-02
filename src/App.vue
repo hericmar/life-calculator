@@ -1,5 +1,5 @@
 <script setup lang="ts">
- import { reactive, computed } from 'vue'
+import { reactive, computed } from 'vue'
 import { Pie } from 'vue-chartjs'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 
@@ -9,6 +9,7 @@ const form = reactive({
   gender: 'muz',
   age: 40,
   retirementAge: 67,
+  lifeExpectancy: 78,
   sleepHours: 7.5,
   foodHours: 1.5,
   hygieneHours: 1,
@@ -20,7 +21,6 @@ const form = reactive({
 })
 
 const chartData = computed(() => {
-  const yearsLeft = Math.max(0, form.retirementAge - form.age)
   const totalWeeklyHours = 168 // 24 * 7
 
   // Convert daily to weekly
@@ -95,20 +95,103 @@ const freeTimePercent = computed(() => {
   const freeHours = Math.max(0, totalWeeklyHours - usedHours)
   return ((freeHours / totalWeeklyHours) * 100).toFixed(1)
 })
+
+const lifeChartData = computed(() => {
+  const yearsLeft = Math.max(0, form.lifeExpectancy - form.age)
+  const yearsToRetirement = Math.max(0, form.retirementAge - form.age)
+  const yearsAfterRetirement = Math.max(0, yearsLeft - yearsToRetirement)
+  const yearsLived = form.age
+
+  const weeksPerYear = 52
+  const hoursPerWeek = 168
+
+  // Weekly hours breakdown
+  const sleepWeekly = form.sleepHours * 7
+  const foodWeekly = form.foodHours * 7
+  const hygieneWeekly = form.hygieneHours * 7
+  const tvWeekly = form.tvHours * 7
+  const entertainmentWeekly = form.entertainmentHours * 7
+
+  // Total hours in expected life
+  const livedHours = yearsLived * weeksPerYear * hoursPerWeek
+
+  // Calculate totals for working years
+  const workingWeeks = yearsToRetirement * weeksPerYear
+  const retiredWeeks = yearsAfterRetirement * weeksPerYear
+  const totalWeeks = workingWeeks + retiredWeeks
+
+  // Sleep, food, hygiene, tv, entertainment apply to all remaining life
+  const totalSleep = sleepWeekly * totalWeeks
+  const totalFood = foodWeekly * totalWeeks
+  const totalHygiene = hygieneWeekly * totalWeeks
+  const totalTv = tvWeekly * totalWeeks
+  const totalEntertainment = entertainmentWeekly * totalWeeks
+
+  // Work, commute, chores only during working years
+  const totalWork = form.workHoursWeekly * workingWeeks
+  const totalCommute = form.commuteHoursWeekly * workingWeeks
+  const totalChores = form.choresHoursWeekly * totalWeeks
+
+  const totalUsed = totalSleep + totalFood + totalHygiene + totalTv + totalEntertainment + totalWork + totalCommute + totalChores
+  const totalFree = Math.max(0, (yearsLeft * weeksPerYear * hoursPerWeek) - totalUsed)
+
+  const toYears = (hours: number) => (hours / (weeksPerYear * hoursPerWeek)).toFixed(1)
+
+  return {
+    labels: [
+      `Prožito (${toYears(livedHours)} let)`,
+      `Spánek (${toYears(totalSleep)} let)`,
+      `Jídlo (${toYears(totalFood)} let)`,
+      `Hygiena (${toYears(totalHygiene)} let)`,
+      `Práce (${toYears(totalWork)} let)`,
+      `Dojíždění (${toYears(totalCommute)} let)`,
+      `Domácnost (${toYears(totalChores)} let)`,
+      `TV (${toYears(totalTv)} let)`,
+      `PC/Mobil (${toYears(totalEntertainment)} let)`,
+      `Volný čas (${toYears(totalFree)} let)`,
+    ],
+    datasets: [{
+      data: [
+        livedHours, totalSleep, totalFood, totalHygiene, totalWork, totalCommute, totalChores, totalTv, totalEntertainment, totalFree
+      ],
+      backgroundColor: [
+        '#475569', '#6366f1', '#8b5cf6', '#a855f7', '#ec4899',
+        '#f43f5e', '#f97316', '#eab308', '#84cc16', '#22c55e'
+      ],
+      borderWidth: 0,
+    }]
+  }
+})
+
+const freeYearsLeft = computed(() => {
+  const yearsLeft = Math.max(0, form.lifeExpectancy - form.age)
+  const yearsToRetirement = Math.max(0, form.retirementAge - form.age)
+  const yearsAfterRetirement = Math.max(0, yearsLeft - yearsToRetirement)
+  const weeksPerYear = 52
+  const hoursPerWeek = 168
+
+  const sleepWeekly = form.sleepHours * 7
+  const foodWeekly = form.foodHours * 7
+  const hygieneWeekly = form.hygieneHours * 7
+  const tvWeekly = form.tvHours * 7
+  const entertainmentWeekly = form.entertainmentHours * 7
+
+  const totalHoursLeft = yearsLeft * weeksPerYear * hoursPerWeek
+  const workingWeeks = yearsToRetirement * weeksPerYear
+  const totalWeeks = workingWeeks + yearsAfterRetirement * weeksPerYear
+
+  const totalUsed = (sleepWeekly + foodWeekly + hygieneWeekly + tvWeekly + entertainmentWeekly) * totalWeeks +
+    (form.workHoursWeekly + form.commuteHoursWeekly) * workingWeeks + form.choresHoursWeekly * totalWeeks
+
+  const totalFree = Math.max(0, totalHoursLeft - totalUsed)
+  return (totalFree / (weeksPerYear * hoursPerWeek)).toFixed(1)
+})
 </script>
 
 <template>
   <div class="wrapper">
     <form class="card" @submit.prevent>
       <h1>⏳ Kalkulačka života</h1>
-
-      <div class="field">
-        <label>Jste</label>
-        <div class="radio-group">
-          <label><input type="radio" v-model="form.gender" value="muz" /> Muž</label>
-          <label><input type="radio" v-model="form.gender" value="zena" /> Žena</label>
-        </div>
-      </div>
 
       <div class="field">
         <label>Kolik je Vám let?</label>
@@ -118,7 +201,12 @@ const freeTimePercent = computed(() => {
       <div class="field">
         <label>V kolika letech půjdete do důchodu?</label>
         <input type="number" v-model="form.retirementAge" min="0" max="120" />
-        <span class="hint">Přesněji zjistíte zde: <a href="http://www.duchody-duchodci.cz/duchodovy-vek.php" target="_blank">duchody-duchodci.cz</a></span>
+      </div>
+
+      <div class="field">
+        <label>Očekávaná délka života</label>
+        <input type="number" v-model="form.lifeExpectancy" min="0" max="120" />
+        <span class="hint">Průměr: muži ~76 let, ženy ~82 let</span>
       </div>
 
       <div class="section-title">Denní rutina</div>
@@ -166,10 +254,18 @@ const freeTimePercent = computed(() => {
       </div>
     </form>
 
-    <div class="card chart-card">
-      <h2>📊 Váš týden</h2>
-      <Pie :data="chartData" :options="chartOptions" />
-      <p class="summary">Máte <strong>{{ freeTimePercent }}%</strong> volného času týdně</p>
+    <div class="charts-column">
+      <div class="card chart-card">
+        <h2>📊 Váš týden</h2>
+        <Pie :data="chartData" :options="chartOptions" />
+        <p class="summary">Máte <strong>{{ freeTimePercent }}%</strong> volného času týdně</p>
+      </div>
+
+      <div class="card chart-card">
+        <h2>🧬 Zbývající život</h2>
+        <Pie :data="lifeChartData" :options="chartOptions" />
+        <p class="summary">Zbývá vám <strong>{{ freeYearsLeft }} let</strong> volného času</p>
+      </div>
     </div>
   </div>
 </template>
@@ -189,6 +285,14 @@ const freeTimePercent = computed(() => {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
   padding: 2rem;
   font-family: 'Inter', sans-serif;
+}
+
+.charts-column {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  width: 100%;
+  max-width: 480px;
 }
 
 .card {
